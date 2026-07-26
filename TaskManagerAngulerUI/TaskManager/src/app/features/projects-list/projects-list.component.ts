@@ -22,11 +22,16 @@ export class ProjectsListComponent implements OnInit {
   hasPreviousPage: boolean = false;
   hasNextPage: boolean = false;
 
-  // Modal State
+  // Create Modal State
   isCreateModalOpen: boolean = false;
   newProjectName: string = '';
   newProjectDesc: string = '';
   isSubmitting: boolean = false;
+
+  // Delete Confirmation Modal State
+  isConfirmModalOpen: boolean = false;
+  projectToDelete: Project | null = null;
+  isDeleting: boolean = false;
 
   constructor(
     private projectService: ProjectService,
@@ -114,13 +119,33 @@ export class ProjectsListComponent implements OnInit {
     });
   }
 
-  deleteProject(event: Event, project: Project): void {
+  promptDeleteProject(event: Event, project: Project): void {
     event.stopPropagation();
-    if (confirm(`Are you sure you want to delete project "${project.name}" and all its tasks?`)) {
-      this.projectService.delete(project.id).subscribe({
-        next: () => this.loadProjects(),
-        error: (err) => alert('Failed to delete project.')
-      });
-    }
+    this.projectToDelete = project;
+    this.isConfirmModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeConfirmModal(): void {
+    this.isConfirmModalOpen = false;
+    this.projectToDelete = null;
+    this.isDeleting = false;
+    this.cdr.detectChanges();
+  }
+
+  confirmDeleteProject(): void {
+    if (!this.projectToDelete) return;
+    this.isDeleting = true;
+    this.projectService.delete(this.projectToDelete.id).subscribe({
+      next: () => {
+        this.closeConfirmModal();
+        this.loadProjects();
+      },
+      error: (err) => {
+        console.error(err);
+        this.isDeleting = false;
+        alert('Failed to delete project.');
+      }
+    });
   }
 }

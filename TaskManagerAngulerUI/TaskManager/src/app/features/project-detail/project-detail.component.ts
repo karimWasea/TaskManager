@@ -41,6 +41,12 @@ export class ProjectDetailComponent implements OnInit {
   taskDueDate: string = '';
   isSavingTask: boolean = false;
 
+  // Confirmation Modal State
+  isConfirmModalOpen: boolean = false;
+  deleteTargetType: 'project' | 'task' | null = null;
+  taskToDeleteId: string | null = null;
+  isDeleting: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -131,11 +137,53 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 
-  deleteProject(): void {
-    if (this.project && confirm(`Delete project "${this.project.name}" and all associated tasks?`)) {
+  // Delete Prompting
+  promptDeleteProject(): void {
+    this.deleteTargetType = 'project';
+    this.taskToDeleteId = null;
+    this.isConfirmModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  promptDeleteTask(taskId: string): void {
+    this.deleteTargetType = 'task';
+    this.taskToDeleteId = taskId;
+    this.isConfirmModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeConfirmModal(): void {
+    this.isConfirmModalOpen = false;
+    this.deleteTargetType = null;
+    this.taskToDeleteId = null;
+    this.isDeleting = false;
+    this.cdr.detectChanges();
+  }
+
+  confirmDelete(): void {
+    if (this.deleteTargetType === 'project' && this.project) {
+      this.isDeleting = true;
       this.projectService.delete(this.project.id).subscribe({
-        next: () => this.router.navigate(['/projects']),
-        error: (err) => alert('Failed to delete project.')
+        next: () => {
+          this.closeConfirmModal();
+          this.router.navigate(['/projects']);
+        },
+        error: (err) => {
+          this.isDeleting = false;
+          alert('Failed to delete project.');
+        }
+      });
+    } else if (this.deleteTargetType === 'task' && this.taskToDeleteId) {
+      this.isDeleting = true;
+      this.taskService.delete(this.taskToDeleteId).subscribe({
+        next: () => {
+          this.closeConfirmModal();
+          this.loadProjectTasks();
+        },
+        error: (err) => {
+          this.isDeleting = false;
+          alert('Failed to delete task.');
+        }
       });
     }
   }
@@ -247,14 +295,5 @@ export class ProjectDetailComponent implements OnInit {
       },
       error: (err) => alert('Failed to update task status.')
     });
-  }
-
-  deleteTask(taskId: string): void {
-    if (confirm('Are you sure you want to delete this task?')) {
-      this.taskService.delete(taskId).subscribe({
-        next: () => this.loadProjectTasks(),
-        error: (err) => alert('Failed to delete task.')
-      });
-    }
   }
 }
