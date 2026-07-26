@@ -1,0 +1,17 @@
+<div class="app-shell">
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="nav-brand" routerLink="/">
+      <span class="brand-icon">⚡</span>
+      <span class="brand-name">Task Manager</span>
+    </div>
+    <nav class="nav-links">
+      <a routerLink="/projects" routerLinkActive="active" class="nav-item">Projects</a>
+    </nav>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="app-main">
+    <router-outlet></router-outlet>
+  </main>
+</div>

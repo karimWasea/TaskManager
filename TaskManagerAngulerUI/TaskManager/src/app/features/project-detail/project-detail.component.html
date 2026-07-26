@@ -1,0 +1,233 @@
+<div class="detail-container">
+  <!-- Back Link -->
+  <div class="top-nav">
+    <a routerLink="/projects" class="back-link">← Back to Dashboard</a>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading project details...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    <span>⚠️ {{ errorMessage }}</span>
+    <button class="btn btn-secondary btn-sm" (click)="loadProjectDetails()">Retry</button>
+  </div>
+
+  <div *ngIf="!isLoading && project" class="content-wrapper">
+    <!-- Project Header Banner -->
+    <div class="project-banner">
+      <div *ngIf="!isEditingProject" class="banner-content">
+        <div class="banner-title-row">
+          <h1 class="banner-title">{{ project.name }}</h1>
+          <div class="banner-actions">
+            <button class="btn btn-outline" (click)="toggleEditProject()">✏️ Edit</button>
+            <button class="btn btn-danger" (click)="deleteProject()">🗑️ Delete</button>
+          </div>
+        </div>
+        <p class="banner-desc">{{ project.description || 'No description provided.' }}</p>
+        <span class="meta-date">Created on {{ project.createdAt | date:'longDate' }}</span>
+      </div>
+
+      <!-- Project Edit Form -->
+      <div *ngIf="isEditingProject" class="edit-project-form">
+        <h3 class="mb-3">Edit Project Details</h3>
+        <form (ngSubmit)="saveProject()">
+          <div class="form-group mb-3">
+            <label for="pEditName" class="form-label">Project Name *</label>
+            <input
+              id="pEditName"
+              type="text"
+              class="form-control"
+              [(ngModel)]="editName"
+              name="editName"
+              required
+            />
+          </div>
+          <div class="form-group mb-3">
+            <label for="pEditDesc" class="form-label">Description</label>
+            <textarea
+              id="pEditDesc"
+              rows="3"
+              class="form-control"
+              [(ngModel)]="editDesc"
+              name="editDesc"
+            ></textarea>
+          </div>
+          <div class="form-actions d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-secondary" (click)="toggleEditProject()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="!editName.trim()">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tasks Section Header & Stats -->
+    <div class="tasks-header">
+      <div>
+        <h2>Project Tasks</h2>
+        <p class="subtitle">Track work items and change statuses in real time</p>
+      </div>
+      <button class="btn btn-primary" (click)="openAddTaskModal()">
+        <span>+</span> Add Task
+      </button>
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="filter-tabs">
+      <button
+        class="tab-btn"
+        [class.active]="selectedStatusFilter === 'All'"
+        (click)="setStatusFilter('All')"
+      >
+        All
+      </button>
+      <button
+        class="tab-btn status-todo"
+        [class.active]="selectedStatusFilter === 'ToDo'"
+        (click)="setStatusFilter('ToDo')"
+      >
+        📌 To Do
+      </button>
+      <button
+        class="tab-btn status-inprogress"
+        [class.active]="selectedStatusFilter === 'InProgress'"
+        (click)="setStatusFilter('InProgress')"
+      >
+        ⚡ In Progress
+      </button>
+      <button
+        class="tab-btn status-done"
+        [class.active]="selectedStatusFilter === 'Done'"
+        (click)="setStatusFilter('Done')"
+      >
+        ✅ Done
+      </button>
+    </div>
+
+    <!-- Tasks List -->
+    <div class="tasks-grid" *ngIf="tasks.length > 0">
+      <div *ngFor="let task of tasks" class="task-card" [ngClass]="'status-border-' + task.status.toLowerCase()">
+        <div class="task-card-header">
+          <h4 class="task-title">{{ task.title }}</h4>
+          <span class="status-pill" [ngClass]="'pill-' + task.status.toLowerCase()">
+            {{ task.status }}
+          </span>
+        </div>
+
+        <p class="task-desc" *ngIf="task.description">{{ task.description }}</p>
+        <p class="task-desc empty-text" *ngIf="!task.description">No description</p>
+
+        <div class="task-meta">
+          <span *ngIf="task.dueDate">📅 Due: {{ task.dueDate | date:'mediumDate' }}</span>
+          <span *ngIf="!task.dueDate" class="text-muted">📅 No due date</span>
+        </div>
+
+        <div class="task-card-footer">
+          <div class="status-changer">
+            <label>Status:</label>
+            <select [value]="task.status" (change)="changeTaskStatus(task, $event)" class="status-select">
+              <option value="ToDo">ToDo</option>
+              <option value="InProgress">InProgress</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+
+          <div class="task-actions">
+            <button class="btn-icon" (click)="openEditTaskModal(task)" title="Edit Task">✏️</button>
+            <button class="btn-icon btn-delete" (click)="deleteTask(task.id)" title="Delete Task">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty Tasks State -->
+    <div *ngIf="tasks.length === 0" class="empty-tasks">
+      <div class="empty-icon">📝</div>
+      <h3>No Tasks Found</h3>
+      <p *ngIf="selectedStatusFilter !== 'All'">No tasks match status <strong>{{ selectedStatusFilter }}</strong>.</p>
+      <p *ngIf="selectedStatusFilter === 'All'">This project doesn't have any tasks yet.</p>
+      <button class="btn btn-primary" (click)="openAddTaskModal()">+ Create Task</button>
+    </div>
+
+    <!-- Task Pagination Bar -->
+    <div *ngIf="totalTaskPages > 1" class="pagination-bar mt-4">
+      <button class="btn btn-secondary btn-sm" [disabled]="!hasPreviousTaskPage" (click)="goToTaskPage(taskPageNumber - 1)">
+        ← Previous
+      </button>
+      <span class="page-indicator">
+        Page <strong>{{ taskPageNumber }}</strong> of <strong>{{ totalTaskPages }}</strong>
+      </span>
+      <button class="btn btn-secondary btn-sm" [disabled]="!hasNextTaskPage" (click)="goToTaskPage(taskPageNumber + 1)">
+        Next →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add/Edit Task -->
+<div class="modal-backdrop" *ngIf="isTaskModalOpen">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>{{ editingTaskId ? 'Edit Task' : 'Add New Task' }}</h2>
+      <button class="close-btn" (click)="closeTaskModal()">&times;</button>
+    </div>
+    <form (ngSubmit)="saveTask()">
+      <div class="form-group mb-3">
+        <label for="tTitle" class="form-label">Title *</label>
+        <input
+          id="tTitle"
+          type="text"
+          class="form-control"
+          placeholder="e.g. Implement User Authentication"
+          [(ngModel)]="taskTitle"
+          name="taskTitle"
+          required
+        />
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="tDesc" class="form-label">Description</label>
+        <textarea
+          id="tDesc"
+          rows="3"
+          class="form-control"
+          placeholder="Details about task requirements..."
+          [(ngModel)]="taskDescription"
+          name="taskDescription"
+        ></textarea>
+      </div>
+
+      <div class="form-row d-flex gap-3 mb-3">
+        <div class="form-group col flex-fill">
+          <label for="tStatus" class="form-label">Status</label>
+          <select id="tStatus" [(ngModel)]="taskStatus" name="taskStatus" class="form-control">
+            <option value="ToDo">ToDo</option>
+            <option value="InProgress">InProgress</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+
+        <div class="form-group col flex-fill">
+          <label for="tDue" class="form-label">Due Date</label>
+          <input
+            id="tDue"
+            type="date"
+            class="form-control"
+            [(ngModel)]="taskDueDate"
+            name="taskDueDate"
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeTaskModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!taskTitle.trim() || isSavingTask">
+          {{ isSavingTask ? 'Saving...' : (editingTaskId ? 'Save Changes' : 'Create Task') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
