@@ -1,6 +1,6 @@
 # ⚡ Task Manager — ASP.NET Core 8 Clean Architecture + Angular UI
 
-A production-quality full-stack Task Manager application built with **ASP.NET Core 8 Web API** (Clean Architecture, SQL Server EF Core 8 Code-First migrations, FluentValidation, generic Result Pattern) and an **Angular 19/22** frontend single-page application.
+A production-quality full-stack Task Manager application built with **ASP.NET Core 8 Web API** (Clean Architecture, EF Core 8 Code-First migrations, FluentValidation, generic Result Pattern, ABP-style request DTOs) and an **Angular 19/22** frontend single-page application.
 
 ---
 
@@ -24,9 +24,9 @@ D:\Task_ManagerTechnical Task\
         │   │   │   ├── models/             # Project & Task models, ApiResult, PagedResult
         │   │   │   └── services/           # ProjectService & TaskService (HttpClient)
         │   │   └── features/
-        │   │       ├── projects-list/      # Dashboard (search, list, pagination, create modal)
+        │   │       ├── projects-list/      # Dashboard (search, list, pagination, create modal, delete modal)
         │   │       └── project-detail/     # Project detail (inline edit, task CRUD, status tabs, pagination)
-        │   └── styles.css                  # Global Bootstrap 5 styles & pop-up modal styling
+        │   └── styles.css                  # Global Bootstrap 5 styles & pop-up confirmation modal styling
         └── angular.json
 ```
 
@@ -52,12 +52,14 @@ D:\Task_ManagerTechnical Task\
     └──────────────────┘
 ```
 
-### Key Design Patterns
-- **Repository Pattern & Unit of Work**: Generic `IRepository<T>`, `IProjectRepository`, `ITaskRepository`, `IUnitOfWork`
-- **Result Pattern (`Result<T>`)**: All API responses wrap payloads in a standardized `Result<T>` structure (`IsSuccess`, `Data`, `Message`, `Errors`)
-- **ABP-Style Request Objects**: `GetProjectsInputDto` and `GetTasksInputDto` (`PageNumber`, `PageSize`, `Sorting`, `Search`, `Status`)
-- **FluentValidation**: Input validation for DTOs with error mapping
-- **Global Error Handling**: Custom `ExceptionHandlingMiddleware` for HTTP status code mapping
+### Key Design Patterns & Engineering Highlights
+- **Repository Pattern & Unit of Work**: Generic `IRepository<T>`, `IProjectRepository`, `ITaskRepository`, `IUnitOfWork`.
+- **Result Pattern (`Result<T>` & `PagedResult<T>`)**: All API endpoints return a standardized generic result object containing `IsSuccess`, `Data`, `Message`, and `Errors`.
+- **ABP-Style Request Objects**: Encapsulated pagination parameters in `GetProjectsInputDto` and `GetTasksInputDto`.
+- **Dynamic Self-Normalizing Pagination**: `PagedRequestDto` automatically normalizes `PageNumber` (>= 1) and `PageSize` (<= 100 max cap) with encapsulated `SkipCount` calculation.
+- **FluentValidation**: Strict input validation for DTOs mapped to HTTP 400 responses.
+- **Global Error Handling**: Custom `ExceptionHandlingMiddleware` for clean JSON error payloads.
+- **Professional Custom Confirmation Modals**: Native browser popups (`confirm()`) are replaced with styled glassmorphism confirmation modals for project and task deletions.
 
 ---
 
@@ -82,7 +84,7 @@ D:\Task_ManagerTechnical Task\
 | `GET` | `/api/tasks/{id}` | Get task by ID |
 | `POST` | `/api/tasks` | Create a new task |
 | `PUT` | `/api/tasks/{id}` | Update task details |
-| `PATCH` | `/api/tasks/{id}/status` | Direct task status update |
+| `PATCH` | `/api/tasks/{id}/status` | Direct task status update (`ToDo`, `InProgress`, `Done`) |
 | `DELETE` | `/api/tasks/{id}` | Delete task |
 
 ---
@@ -95,7 +97,6 @@ cd "D:\Task_ManagerTechnical Task\TaskManager"
 dotnet build TaskManager.slnx
 dotnet run --project TaskManager/TaskManager.csproj --urls "http://localhost:5000"
 ```
-> **Swagger UI**: http://localhost:5000/swagger
 
 ### 2. Angular Frontend UI
 ```bash
@@ -103,4 +104,4 @@ cd "D:\Task_ManagerTechnical Task\TaskManagerAngulerUI\TaskManager"
 npm install
 npm start
 ```
-> **App**: http://localhost:4200
+> **App URL**: http://localhost:4200
