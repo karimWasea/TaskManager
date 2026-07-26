@@ -7,7 +7,7 @@ A production-quality full-stack Task Manager application built with **ASP.NET Co
 ## 📁 Project Structure (2 Core Projects)
 
 ```
-D:\Task_ManagerTechnical Task\
+.
 ├── README.md                               # Full technical documentation
 ├── TaskManager/                            # 1. ASP.NET Core 8 Web API Backend
 │   ├── TaskManager.slnx                    # .NET Solution file
@@ -93,14 +93,14 @@ D:\Task_ManagerTechnical Task\
 
 ### 1. Backend API (ASP.NET Core 8)
 ```bash
-cd "D:\Task_ManagerTechnical Task\TaskManager"
+cd TaskManager
 dotnet build TaskManager.slnx
 dotnet run --project TaskManager/TaskManager.csproj --urls "http://localhost:5000"
 ```
 
 ### 2. Angular Frontend UI
 ```bash
-cd "D:\Task_ManagerTechnical Task\TaskManagerAngulerUI\TaskManager"
+cd TaskManagerAngulerUI/TaskManager
 npm install
 npm start
 ```
