@@ -15,9 +15,6 @@ public class TaskService : ITaskService
 
     public async Task<Result<PagedResult<TaskDto>>> GetAllAsync(GetTasksInputDto input)
     {
-        var pageNumber = input.PageNumber < 1 ? 1 : input.PageNumber;
-        var pageSize = input.PageSize < 1 ? 6 : input.PageSize;
-
         TaskItemStatus? statusEnum = null;
         if (!string.IsNullOrWhiteSpace(input.Status))
         {
@@ -26,9 +23,9 @@ public class TaskService : ITaskService
             statusEnum = parsed;
         }
 
-        var (tasks, totalCount) = await _unitOfWork.Tasks.GetPagedTasksAsync(null, statusEnum, pageNumber, pageSize);
+        var (tasks, totalCount) = await _unitOfWork.Tasks.GetPagedTasksAsync(null, statusEnum, input.PageNumber, input.PageSize);
         var dtos = tasks.Select(Map).ToList();
-        var pagedResult = new PagedResult<TaskDto>(dtos, totalCount, pageNumber, pageSize);
+        var pagedResult = new PagedResult<TaskDto>(dtos, totalCount, input.PageNumber, input.PageSize);
         return Result<PagedResult<TaskDto>>.Success(pagedResult, "Tasks retrieved successfully.");
     }
 
@@ -44,9 +41,6 @@ public class TaskService : ITaskService
         var project = await _unitOfWork.Projects.GetByIdAsync(projectId)
             ?? throw new NotFoundException($"Project with id '{projectId}' was not found.");
 
-        var pageNumber = input.PageNumber < 1 ? 1 : input.PageNumber;
-        var pageSize = input.PageSize < 1 ? 6 : input.PageSize;
-
         TaskItemStatus? statusEnum = null;
         if (!string.IsNullOrWhiteSpace(input.Status))
         {
@@ -55,9 +49,9 @@ public class TaskService : ITaskService
             statusEnum = parsed;
         }
 
-        var (tasks, totalCount) = await _unitOfWork.Tasks.GetPagedTasksAsync(projectId, statusEnum, pageNumber, pageSize);
+        var (tasks, totalCount) = await _unitOfWork.Tasks.GetPagedTasksAsync(projectId, statusEnum, input.PageNumber, input.PageSize);
         var dtos = tasks.Select(Map).ToList();
-        var pagedResult = new PagedResult<TaskDto>(dtos, totalCount, pageNumber, pageSize);
+        var pagedResult = new PagedResult<TaskDto>(dtos, totalCount, input.PageNumber, input.PageSize);
         return Result<PagedResult<TaskDto>>.Success(pagedResult, "Project tasks retrieved successfully.");
     }
 

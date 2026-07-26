@@ -14,15 +14,12 @@ public class ProjectService : IProjectService
 
     public async Task<Result<PagedResult<ProjectDto>>> GetAllAsync(GetProjectsInputDto input)
     {
-        var pageNumber = input.PageNumber < 1 ? 1 : input.PageNumber;
-        var pageSize = input.PageSize < 1 ? 6 : input.PageSize;
-
-        var (projects, totalCount) = await _unitOfWork.Projects.GetPagedProjectsAsync(pageNumber, pageSize, input.Search);
+        var (projects, totalCount) = await _unitOfWork.Projects.GetPagedProjectsAsync(input.PageNumber, input.PageSize, input.Search);
 
         var dtos = projects.Select(p => new ProjectDto(
             p.Id, p.Name, p.Description, p.CreatedAt, p.Tasks.Count)).ToList();
 
-        var pagedResult = new PagedResult<ProjectDto>(dtos, totalCount, pageNumber, pageSize);
+        var pagedResult = new PagedResult<ProjectDto>(dtos, totalCount, input.PageNumber, input.PageSize);
         return Result<PagedResult<ProjectDto>>.Success(pagedResult, "Projects retrieved successfully.");
     }
 
